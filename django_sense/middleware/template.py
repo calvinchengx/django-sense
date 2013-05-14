@@ -37,6 +37,10 @@ Template.render = render_patch
 class TemplateMiddleware:
 
     def process_request(self, request):
+
+        if not hasattr(request, 'user'):
+            return
+
         if (settings.DEBUG or request.user.is_superuser) and 'template' in request.REQUEST.keys():
             self.time_started = time.time()
             self.templates_used = []
