@@ -12,11 +12,13 @@ from django.template.loader import get_template
 from django.template import Context
 from django.http import HttpResponse
 
+
 def do_stats(stats):
     """
     Show the gathered statistics.
     """
     return show_text(stats.timings, stats.unit)
+
 
 def show_func(filename, start_lineno, func_name, timings, unit):
     """
@@ -42,14 +44,14 @@ def show_func(filename, start_lineno, func_name, timings, unit):
         sublines = [''] * nlines
     else:
         all_lines = linecache.getlines(filename)
-        sublines = inspect.getblock(all_lines[start_lineno-1:])
+        sublines = inspect.getblock(all_lines[start_lineno - 1:])
 
     for lineno, nhits, time in timings:
         d[lineno] = (
             nhits,
             '%2.3f s' % (time * unit),
             '%5.1f' % (float(time) / nhits),
-            '%5.1f' % (100*time / total_time)
+            '%5.1f' % (100 * time / total_time)
         )
 
     linenos = range(start_lineno, start_lineno + len(sublines))
@@ -66,6 +68,7 @@ def show_func(filename, start_lineno, func_name, timings, unit):
             line.rstrip('\n').rstrip('\r')))
     return results
 
+
 def show_text(stats, unit):
     """
     Show text for the given timings.
@@ -76,10 +79,11 @@ def show_text(stats, unit):
             unit))
     return results
 
+
 class LineByLine(object):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if (settings.DEBUG or request.user.is_superuser) and request.REQUEST.has_key('line'):
+        if (settings.DEBUG or request.user.is_superuser) and 'line' in request.REQUEST.keys():
             request.devserver_profiler = LineProfiler()
             request.devserver_profiler_run = True
 
@@ -87,11 +91,15 @@ class LineByLine(object):
             _unwrap_closure_and_profile(request.devserver_profiler, view_func)
 
     def process_complete(self, request):
-        if (settings.DEBUG or request.user.is_superuser) and request.REQUEST.has_key('line'):
+        if (settings.DEBUG or request.user.is_superuser) and 'line' in request.REQUEST.keys():
             request.devserver_profiler.disable_by_count()
 
     def process_response(self, request, response):
-        if (settings.DEBUG or request.user.is_superuser) and request.REQUEST.has_key('line'):
+
+        if not hasattr(request, 'user'):
+            return response
+
+        if (settings.DEBUG or request.user.is_superuser) and 'line' in request.REQUEST.keys():
             pstats = request.devserver_profiler.get_stats()
             stats = show_text(pstats.timings, pstats.unit)
 
@@ -102,6 +110,7 @@ class LineByLine(object):
             return HttpResponse(html)
         else:
             return response
+
 
 def _unwrap_closure_and_profile(profiler, func):
     if not hasattr(func, 'func_code'):
