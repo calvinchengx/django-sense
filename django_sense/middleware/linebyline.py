@@ -91,6 +91,10 @@ class LineByLine(object):
             _unwrap_closure_and_profile(request.devserver_profiler, view_func)
 
     def process_complete(self, request):
+
+        if not hasattr(request, 'user'):
+            return request
+
         if (settings.DEBUG or request.user.is_superuser) and 'line' in request.REQUEST.keys():
             request.devserver_profiler.disable_by_count()
 

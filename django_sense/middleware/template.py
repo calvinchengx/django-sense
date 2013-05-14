@@ -18,10 +18,12 @@ if Template.render != instrumented_test_render:
 old_template_init = Template.__init__
 old_template_render = Template.render
 
+
 # Patches
 def init_patch(self, template_string, origin=None, name='<Unknown Template>'):
     self.origin = origin
     old_template_init(self, template_string, origin, name)
+
 
 def render_patch(self, ctx):
     self.context = ctx.dicts
@@ -31,10 +33,11 @@ def render_patch(self, ctx):
 Template.__init__ = init_patch
 Template.render = render_patch
 
+
 class TemplateMiddleware:
 
     def process_request(self, request):
-        if (settings.DEBUG or request.user.is_superuser) and request.REQUEST.has_key('template'):
+        if (settings.DEBUG or request.user.is_superuser) and 'template' in request.REQUEST.keys():
             self.time_started = time.time()
             self.templates_used = []
             self.contexts_used = []
@@ -44,7 +47,11 @@ class TemplateMiddleware:
             )
 
     def process_response(self, request, response):
-        if (settings.DEBUG or request.user.is_superuser) and request.REQUEST.has_key('template'):
+
+        if not hasattr(request, 'user'):
+            return response
+
+        if (settings.DEBUG or request.user.is_superuser) and 'template' in request.REQUEST.keys():
             display = get_template('django_sense/templates.html')
 
             pp = pprint.PrettyPrinter()
